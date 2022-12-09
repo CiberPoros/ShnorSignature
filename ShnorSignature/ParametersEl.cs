@@ -5,10 +5,10 @@ using System.Text;
 using System.Numerics;
 using BigMath;
 using System.IO;
-using static ObjectExtensionsNameSpace.ObjectExtensions;
+using static ShnorSignature.ObjectExtensions;
 using static System.Console;
 
-namespace ShorElips
+namespace ShnorSignature
 {
     public class ParametersEl
     {

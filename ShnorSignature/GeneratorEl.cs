@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Numerics;
 using BigMath;
-using static ObjectExtensionsNameSpace.ObjectExtensions;
+using static ShnorSignature.ObjectExtensions;
 
-namespace ShorElips
+namespace ShnorSignature
 {
     class GeneratorEl
     {

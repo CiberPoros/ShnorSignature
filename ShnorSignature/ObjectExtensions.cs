@@ -1,4 +1,4 @@
-﻿namespace ObjectExtensionsNameSpace
+﻿namespace ShnorSignature
 {
     public static class ObjectExtensions
     {

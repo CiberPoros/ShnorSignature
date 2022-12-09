@@ -7,12 +7,12 @@ using static System.Console;
 using System.Numerics;
 using System.IO;
 using BigMath;
-using static ShorElips.ParametersEl;
+using static ShnorSignature.ParametersEl;
 using BigMath.RandomNumbers;
 using System.Security.Cryptography;
 using System.Diagnostics;
 
-namespace ShorElips
+namespace ShnorSignature
 {
     internal class Program
     {
@@ -290,6 +290,21 @@ namespace ShorElips
                 WriteLine();
                 return result;
             } 
+        }
+
+        private static StepType ReadStepType()
+        {
+            Console.WriteLine("Chose step:");
+            Console.WriteLine("1. Create common parameters;");
+            Console.WriteLine("2. Create private key;");
+            Console.WriteLine("3. Create public key;");
+            Console.WriteLine("4. Create signature;");
+            Console.WriteLine("5. Verify signature...");
+
+            for (; ; )
+            {
+
+            }
         }
     }
 }
