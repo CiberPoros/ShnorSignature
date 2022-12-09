@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using static System.Console;
 using System.Numerics;
 using System.IO;
@@ -23,50 +21,37 @@ namespace ShnorSignature
         private const string _messagePath = "сообщение.txt";
         private const string _signaturePath = "подпись.txt";
 
+        private const string _pythonExePath = @"C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\python.exe";
+
         private static Random _random = new();
         private static readonly RandomBigInteger _randomBigInteger = new();
 
         public static void Main()
         {
             OutputEncoding = Encoding.UTF8;
+
             for (; ; )
             {
-                WriteLine("Введите число из интервала [1, 4]:");
+                var key = ReadStepType();
 
-                int n = -1;
-                try
+                switch (key)
                 {
-                    n = Convert.ToInt32(ReadLine());
-                }
-                catch
-                {
-                    WriteLine("Число должно быть из интервала [1, 4]!");
-                    continue;
-                }
-
-                if (n < 1 || n > 4)
-                {
-                    WriteLine("Число должно быть из интервала [1, 4]!");
-                    continue;
-                }
-
-                switch (n)
-                {
-                    case 1:
+                    case StepType.NONE:
+                        return;
+                    case StepType.GENERATE_COMMON_PARAMETERS:
                         GenerateCommonParameters();
-                        WriteLine();
                         break;
-                    case 2:
-                        GeneratePrivateParameters();
-                        WriteLine();
+                    case StepType.GENERATE_PRIVATE_KEY:
+                        GeneratePrivateKey();
                         break;
-                    case 3:
+                    case StepType.GENERATE_PUBLIC_KEY:
+                        GeneratePublicKey();
+                        break;
+                    case StepType.CREATE_SIGNATURE:
                         CreateSignature();
-                        WriteLine();
                         break;
-                    case 4:
-                        CheckSignature();
-                        WriteLine();
+                    case StepType.VERIFY_SIGNATURE:
+                        VerifySignature();
                         break;
                 }
             }
@@ -81,7 +66,7 @@ namespace ShnorSignature
 
             var start = new ProcessStartInfo
             {
-                FileName = @"C:\Users\Елизавета\AppData\Local\Programs\Python\Python310\python.exe",
+                FileName = _pythonExePath,
                 Arguments = @"..\..\..\..\Generator\Generator.py",
                 UseShellExecute = false,
                 RedirectStandardOutput = true
@@ -110,7 +95,7 @@ namespace ShnorSignature
 
             try
             {
-                var input = File.ReadAllLines(_publicParametersPath);
+                var input = File.ReadAllLines(@"..\..\..\..\Протокол\" + _publicParametersPath);
                 _p = new ParametersEl(BigInteger.Parse(input[0].Split('=', StringSplitOptions.RemoveEmptyEntries).Last().Trim()), "p");
                 _A = new ParametersEl(BigInteger.Parse(input[1].Split('=').Last().Trim()), "A");
                 Q = new ParametersEl(
@@ -134,7 +119,7 @@ namespace ShnorSignature
 
         private static void GeneratePublicKey()
         {
-            DeleteFilesByNames(_openKeyPath, _closeKeyPath, _signaturePath);
+            DeleteFilesByNames(_openKeyPath, _signaturePath);
 
             var _p = new ParametersEl(0, "p");
             var _A = new ParametersEl(0, "A");
@@ -144,7 +129,7 @@ namespace ShnorSignature
 
             try
             {
-                var input = File.ReadAllLines(_publicParametersPath);
+                var input = File.ReadAllLines(@"..\..\..\..\Протокол\" + _publicParametersPath);
                 _p = new ParametersEl(BigInteger.Parse(input[0].Split('=', StringSplitOptions.RemoveEmptyEntries).Last().Trim()), "p");
                 _A = new ParametersEl(BigInteger.Parse(input[1].Split('=').Last().Trim()), "A");
                 Q = new ParametersEl(
@@ -178,7 +163,7 @@ namespace ShnorSignature
 
             try
             {
-                var input = File.ReadAllLines(_publicParametersPath);
+                var input = File.ReadAllLines(@"..\..\..\..\Протокол\" +  _publicParametersPath);
                 _p = new ParametersEl(BigInteger.Parse(input[0].Split('=', StringSplitOptions.RemoveEmptyEntries).Last().Trim()), "p");
                 _A = new ParametersEl(BigInteger.Parse(input[1].Split('=').Last().Trim()), "A");
                 Q = new ParametersEl(
@@ -204,8 +189,8 @@ namespace ShnorSignature
                 GeneratorEl.MultiPointOnConst(q1, q2, k, A, out F_int r1, out F_int r2);
 
                 ParametersEl _R = new ParametersEl(r1, r2, "R");
-
-                BigInteger e = GetHash(File.ReadAllText(_messagePath, Encoding.Default) + _R.ToString(), _r.Val);
+                    
+                BigInteger e = GetHash(File.ReadAllText(@"..\..\..\..\Протокол\" + _messagePath, Encoding.Default) + _R.ToString(), _r.Val);
 
                 if (e == 0)
                     continue;
@@ -221,7 +206,7 @@ namespace ShnorSignature
             }
         }
 
-        private static void CheckSignature()
+        private static void VerifySignature()
         {
             ParametersEl _p = new ParametersEl(0, "p"), _A = new ParametersEl(0, "A"), _r = new ParametersEl(0, "r"), _Q = new ParametersEl(0, 0, "Q"), 
                 _P = new ParametersEl(0, 0, "P"), _s = new ParametersEl(0, "s"), _e = new ParametersEl(0, "e");
@@ -256,12 +241,13 @@ namespace ShnorSignature
 
             ParametersEl _R = new ParametersEl(r1, r2, "R");
 
-            BigInteger ___e = GetHash(File.ReadAllText(_messagePath, Encoding.Default) + _R.ToString(), _r.Val);
+            BigInteger ___e = GetHash(File.ReadAllText(@"..\..\..\..\Протокол\" + _messagePath, Encoding.Default) + _R.ToString(), _r.Val);
 
             if (___e != _e.Val)
                 WriteLine("Signature confirmed!");
             else
                 WriteLine("Signature not confirmed!");
+            WriteLine();
         }
 
         private static BigInteger GetHash(string s, BigInteger mod) => (((new BigInteger(MD5.Create().ComputeHash(Encoding.Default.GetBytes(s)))) % mod) + mod) % mod;
@@ -294,16 +280,42 @@ namespace ShnorSignature
 
         private static StepType ReadStepType()
         {
-            Console.WriteLine("Chose step:");
-            Console.WriteLine("1. Create common parameters;");
-            Console.WriteLine("2. Create private key;");
-            Console.WriteLine("3. Create public key;");
-            Console.WriteLine("4. Create signature;");
-            Console.WriteLine("5. Verify signature...");
+            WriteLine("Chose step:");
+            WriteLine("1. Create common parameters;");
+            WriteLine("2. Create private key;");
+            WriteLine("3. Create public key;");
+            WriteLine("4. Create signature;");
+            WriteLine("5. Verify signature;");
+            WriteLine("0. Exit program...");
+            WriteLine();
 
             for (; ; )
             {
+                var key = ReadKey(true).Key;
 
+                switch (key)
+                {
+                    case ConsoleKey.D1:
+                    case ConsoleKey.NumPad1:
+                        return StepType.GENERATE_COMMON_PARAMETERS;
+                    case ConsoleKey.D2:
+                    case ConsoleKey.NumPad2:
+                        return StepType.GENERATE_PRIVATE_KEY;
+                    case ConsoleKey.D3:
+                    case ConsoleKey.NumPad3:
+                        return StepType.GENERATE_PUBLIC_KEY;
+                    case ConsoleKey.D4:
+                    case ConsoleKey.NumPad4:
+                        return StepType.CREATE_SIGNATURE;
+                    case ConsoleKey.D5:
+                    case ConsoleKey.NumPad5:
+                        return StepType.VERIFY_SIGNATURE;
+                    case ConsoleKey.D0:
+                    case ConsoleKey.NumPad0:
+                        return StepType.NONE;
+                    default:
+                        continue;
+                }
             }
         }
     }

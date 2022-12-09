@@ -54,7 +54,7 @@ namespace ShnorSignature
         {
             string[] temp = new string[0]; 
 
-            try { temp = File.ReadAllLines(fileName, Encoding.Default); }
+            try { temp = File.ReadAllLines(@"..\..\..\..\Протокол\" + fileName, Encoding.Default); }
             catch { throw new Exception("File \"" + fileName + "\" does not exists!"); }
 
             ArgIterator iterator = new ArgIterator(__arglist);
@@ -115,7 +115,7 @@ namespace ShnorSignature
             var temp_read = new string[1];
             try
             {
-                temp_read = File.ReadAllLines(fileName, Encoding.Default);
+                temp_read = File.ReadAllLines(@"..\..\..\..\Протокол\" + fileName, Encoding.Default);
             }
             catch
             {
@@ -138,7 +138,7 @@ namespace ShnorSignature
             foreach (string s in temp)
                 tempTo.Add(s);
 
-            File.WriteAllLines(fileName, tempTo.ToArray(), Encoding.Unicode);
+            File.WriteAllLines(@"..\..\..\..\Протокол\" + fileName, tempTo.ToArray(), Encoding.Unicode);
 
             s_out = s_out.Substring(0, s_out.Length - 2);
             WriteLine($"Parameters {s_out} saved to file {fileName}");
