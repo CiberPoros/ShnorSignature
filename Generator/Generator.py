@@ -340,7 +340,7 @@ p, B, Q, r = generator_elliptic_curve(l, m)
 
 print('Result: p: {}, B: {}, Q: {}, r: {}'.format(p, B, Q, r))
 
-f = open("общие_параметры.txt", "w")
+f = open("..\..\..\..\Протокол\общие_параметры.txt", "w")
 f.write('p = {}\nA = {}\nQ = {}\nr = {}'.format(p, B, Q, r))
 f.close()
 

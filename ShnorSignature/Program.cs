@@ -213,7 +213,7 @@ namespace ShnorSignature
 
             try
             {
-                var input = File.ReadAllLines(_publicParametersPath);
+                var input = File.ReadAllLines(@"..\..\..\..\Протокол\" + _publicParametersPath);
                 _p = new ParametersEl(BigInteger.Parse(input[0].Split('=', StringSplitOptions.RemoveEmptyEntries).Last().Trim()), "p");
                 _A = new ParametersEl(BigInteger.Parse(input[1].Split('=').Last().Trim()), "A");
                 _Q = new ParametersEl(
