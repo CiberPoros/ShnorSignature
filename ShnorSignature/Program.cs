@@ -5,7 +5,7 @@ using static System.Console;
 using System.Numerics;
 using System.IO;
 using BigMath;
-using static ShnorSignature.ParametersEl;
+using static ShnorSignature.Param;
 using BigMath.RandomNumbers;
 using System.Security.Cryptography;
 using System.Diagnostics;
@@ -66,8 +66,8 @@ namespace ShnorSignature
 
             var start = new ProcessStartInfo
             {
-                FileName = _pythonExePath,
-                Arguments = @"..\..\..\..\Generator\Generator.py",
+                FileName = Extensios.ArgumentsPath,
+                Arguments = @"..\..\..\..\Generator\Gеnerator.py",
                 UseShellExecute = false,
                 RedirectStandardOutput = true
             };
@@ -91,18 +91,12 @@ namespace ShnorSignature
         {
             DeleteFilesByNames(_openKeyPath, _closeKeyPath, _signaturePath);
 
-            ParametersEl _p = new ParametersEl(0, "p"), _A = new ParametersEl(0, "A"), _r = new ParametersEl(0, "r"), Q = new ParametersEl(0, 0, "Q");
+            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _r = new Param(0, "r"), Q = new Param(0, 0, "Q");
 
             try
             {
                 var input = File.ReadAllLines(@"..\..\..\..\Протокол\" + _publicParametersPath);
-                _p = new ParametersEl(BigInteger.Parse(input[0].Split('=', StringSplitOptions.RemoveEmptyEntries).Last().Trim()), "p");
-                _A = new ParametersEl(BigInteger.Parse(input[1].Split('=').Last().Trim()), "A");
-                Q = new ParametersEl(
-                    BigInteger.Parse(input[2].Split('=').Last().Split(',').First().Trim(' ', '(', ')')),
-                    BigInteger.Parse(input[2].Split('=').Last().Split(',').Last().Trim(' ', '(', ')')),
-                    "Q");
-                _r = new ParametersEl(BigInteger.Parse(input[3].Split('=').Last().Trim()), "r");
+                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r, Q));
             }
             catch (Exception e)
             {
@@ -111,7 +105,7 @@ namespace ShnorSignature
             }
 
             BigInteger l = _randomBigInteger.NextBigInteger(ref _random, 1, _r.Val);
-            OutToFile(_closeKeyPath, new ParametersEl(l, "l"));
+            OutToFile(_closeKeyPath, new Param(l, "l"));
 
             WriteLine("Private key generation completed successfuly!");
             WriteLine();
@@ -121,23 +115,16 @@ namespace ShnorSignature
         {
             DeleteFilesByNames(_openKeyPath, _signaturePath);
 
-            var _p = new ParametersEl(0, "p");
-            var _A = new ParametersEl(0, "A");
-            var _r = new ParametersEl(0, "r");
-            var Q = new ParametersEl(0, 0, "Q");
-            var _l = new ParametersEl(0, "l");
+            var _p = new Param(0, "p");
+            var _A = new Param(0, "A");
+            var _r = new Param(0, "r");
+            var Q = new Param(0, 0, "Q");
+            var _l = new Param(0, "l");
 
             try
             {
                 var input = File.ReadAllLines(@"..\..\..\..\Протокол\" + _publicParametersPath);
-                _p = new ParametersEl(BigInteger.Parse(input[0].Split('=', StringSplitOptions.RemoveEmptyEntries).Last().Trim()), "p");
-                _A = new ParametersEl(BigInteger.Parse(input[1].Split('=').Last().Trim()), "A");
-                Q = new ParametersEl(
-                    BigInteger.Parse(input[2].Split('=').Last().Split(',').First().Trim(' ', '(', ')')),
-                    BigInteger.Parse(input[2].Split('=').Last().Split(',').Last().Trim(' ', '(', ')')),
-                    "Q");
-                _r = new ParametersEl(BigInteger.Parse(input[3].Split('=').Last().Trim()), "r");
-
+                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r, Q));
                 ReadInFile(_closeKeyPath, __arglist(_l));
             }
             catch (Exception e)
@@ -147,9 +134,9 @@ namespace ShnorSignature
             }
 
             F_int q1 = new F_int(Q.X, _p.Val), q2 = new F_int(Q.Y, _p.Val);
-            GeneratorEl.MultiPointOnConst(q1, q2, _l.Val, new F_int(_A.Val, _p.Val), out F_int p1, out F_int p2);
+            Operations.MultiPointOnConst(q1, q2, _l.Val, new F_int(_A.Val, _p.Val), out F_int p1, out F_int p2);
 
-            OutToFile(_openKeyPath, new ParametersEl(p1, p2, "P"));
+            OutToFile(_openKeyPath, new Param(p1, p2, "P"));
 
             WriteLine("Public key calculation completed successfuly!");
             WriteLine();
@@ -159,18 +146,13 @@ namespace ShnorSignature
         {
             DeleteFilesByNames(_signaturePath);
 
-            ParametersEl _p = new ParametersEl(0, "p"), _A = new ParametersEl(0, "A"), _r = new ParametersEl(0, "r"), Q = new ParametersEl(0, 0, "Q"), _l = new ParametersEl(0, "l");
+            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _r = new Param(0, "r"), Q = new Param(0, 0, "Q"), _l = new Param(0, "l");
 
             try
             {
                 var input = File.ReadAllLines(@"..\..\..\..\Протокол\" +  _publicParametersPath);
-                _p = new ParametersEl(BigInteger.Parse(input[0].Split('=', StringSplitOptions.RemoveEmptyEntries).Last().Trim()), "p");
-                _A = new ParametersEl(BigInteger.Parse(input[1].Split('=').Last().Trim()), "A");
-                Q = new ParametersEl(
-                    BigInteger.Parse(input[2].Split('=').Last().Split(',').First().Trim(' ', '(', ')')),
-                    BigInteger.Parse(input[2].Split('=').Last().Split(',').Last().Trim(' ', '(', ')')),
-                    "Q");
-                _r = new ParametersEl(BigInteger.Parse(input[3].Split('=').Last().Trim()), "r");
+                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r, Q));
+
                 ReadInFile(_closeKeyPath, __arglist(_l));
             }
             catch (Exception e)
@@ -186,9 +168,9 @@ namespace ShnorSignature
 
                 F_int q1 = new F_int(Q.X, _p.Val), q2 = new F_int(Q.Y, _p.Val), A = new F_int(_A.Val, _p.Val);
 
-                GeneratorEl.MultiPointOnConst(q1, q2, k, A, out F_int r1, out F_int r2);
+                Operations.MultiPointOnConst(q1, q2, k, A, out F_int r1, out F_int r2);
 
-                ParametersEl _R = new ParametersEl(r1, r2, "R");
+                Param _R = new Param(r1, r2, "R");
                     
                 BigInteger e = GetHash(File.ReadAllText(@"..\..\..\..\Протокол\" + _messagePath, Encoding.Default) + _R.ToString(), _r.Val);
 
@@ -197,7 +179,7 @@ namespace ShnorSignature
 
                 BigInteger s = ((_l.Val * e) % _r.Val + k) % _r.Val;
 
-                OutToFile(_signaturePath, new ParametersEl(e, "e"), new ParametersEl(s, "s"));
+                OutToFile(_signaturePath, new Param(e, "e"), new Param(s, "s"));
 
                 WriteLine("Signature was created successfuly!");
                 WriteLine();
@@ -208,19 +190,13 @@ namespace ShnorSignature
 
         private static void VerifySignature()
         {
-            ParametersEl _p = new ParametersEl(0, "p"), _A = new ParametersEl(0, "A"), _r = new ParametersEl(0, "r"), _Q = new ParametersEl(0, 0, "Q"), 
-                _P = new ParametersEl(0, 0, "P"), _s = new ParametersEl(0, "s"), _e = new ParametersEl(0, "e");
+            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _r = new Param(0, "r"), _Q = new Param(0, 0, "Q"), 
+                _P = new Param(0, 0, "P"), _s = new Param(0, "s"), _e = new Param(0, "e");
 
             try
             {
                 var input = File.ReadAllLines(@"..\..\..\..\Протокол\" + _publicParametersPath);
-                _p = new ParametersEl(BigInteger.Parse(input[0].Split('=', StringSplitOptions.RemoveEmptyEntries).Last().Trim()), "p");
-                _A = new ParametersEl(BigInteger.Parse(input[1].Split('=').Last().Trim()), "A");
-                _Q = new ParametersEl(
-                    BigInteger.Parse(input[2].Split('=').Last().Split(',').First().Trim(' ', '(', ')')),
-                    BigInteger.Parse(input[2].Split('=').Last().Split(',').Last().Trim(' ', '(', ')')),
-                    "Q");
-                _r = new ParametersEl(BigInteger.Parse(input[3].Split('=').Last().Trim()), "r");
+                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r, _Q));
 
                 ReadInFile(_openKeyPath, __arglist(_P));
                 ReadInFile(_signaturePath, __arglist(_s, _e));
@@ -233,17 +209,17 @@ namespace ShnorSignature
 
             F_int q1 = new F_int(_Q.X, _p.Val), q2 = new F_int(_Q.Y, _p.Val), A = new F_int(_A.Val, _p.Val), p1 = new F_int(_P.X, _p.Val), p2 = new F_int(_P.Y, _p.Val);     
 
-            GeneratorEl.MultiPointOnConst(q1, q2, _s.Val, A, out F_int point1_x, out F_int point1_y);
-            GeneratorEl.MultiPointOnConst(p1, p2, _e.Val, A, out F_int point2_x, out F_int point2_y);
+            Operations.MultiPointOnConst(q1, q2, _s.Val, A, out F_int point1_x, out F_int point1_y);
+            Operations.MultiPointOnConst(p1, p2, _e.Val, A, out F_int point2_x, out F_int point2_y);
 
             point2_y._val = (((-point2_y._val) % _p.Val) + _p.Val) % _p.Val;
-            GeneratorEl.SummPointOnPoint(point1_x, point1_y, point2_x, point2_y, out F_int r1, out F_int r2, A);
+            Operations.SumPoints(point1_x, point1_y, point2_x, point2_y, out F_int r1, out F_int r2, A);
 
-            ParametersEl _R = new ParametersEl(r1, r2, "R");
+            Param _R = new Param(r1, r2, "R");
 
             BigInteger ___e = GetHash(File.ReadAllText(@"..\..\..\..\Протокол\" + _messagePath, Encoding.Default) + _R.ToString(), _r.Val);
 
-            if (___e != _e.Val)
+            if (___e == _e.Val)
                 WriteLine("Signature confirmed!");
             else
                 WriteLine("Signature not confirmed!");
