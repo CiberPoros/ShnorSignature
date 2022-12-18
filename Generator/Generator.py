@@ -338,9 +338,9 @@ l = int(f.read())
 m = 2
 p, B, Q, r = generator_elliptic_curve(l, m)
 
-print('Result: p: {}, B: {}, Q: {}, r: {}'.format(p, B, Q, r))
+print('В файл "..\..\..\..\Протокол\общие_параметры.txt" были сохранены параметры: p, B, Q, r')
 
-f = open("..\..\..\..\Протокол\общие_параметры.txt", "w")
+f = open("..\..\..\..\Протокол\_общие_параметры.txt", "w")
 f.write('p = {}\nA = {}\nQ = {}\nr = {}'.format(p, B, Q, r))
 f.close()
 

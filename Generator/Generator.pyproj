@@ -7,7 +7,8 @@
     <StartupFile>Generator.py</StartupFile>
     <SearchPath>
     </SearchPath>
-    <WorkingDirectory>../Протокол</WorkingDirectory>
+    <WorkingDirectory>
+    </WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>Generator</Name>
     <RootNamespace>Generator</RootNamespace>
