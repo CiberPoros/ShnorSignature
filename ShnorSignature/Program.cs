@@ -122,7 +122,7 @@ namespace ShnorSignature
             }
             catch (Exception e)
             {
-                WriteLine("Error when read file. Details: " + e.Message);
+                WriteLine("Ошибка при чтении файла. Подробности: " + e.Message);
                 return;
             }
 
@@ -157,7 +157,7 @@ namespace ShnorSignature
             }
             catch (Exception e)
             {
-                WriteLine("Error when read file. Details: " + e.Message);
+                WriteLine("Ошибка при чтении файла. Подробности: " + e.Message);
                 return;
             }
 
@@ -183,7 +183,7 @@ namespace ShnorSignature
             }
             catch (Exception e)
             {
-                WriteLine("Error when read file. Details: " + e.Message);
+                WriteLine("Ошибка при чтении файла. Подробности: " + e.Message);
                 return;
             }
 
@@ -214,7 +214,7 @@ namespace ShnorSignature
             }
             catch (Exception e)
             {
-                WriteLine("Error when read file. Details: " + e.Message);
+                WriteLine("Ошибка при чтении файла. Подробности: " + e.Message);
                 return;
             }
 
@@ -247,7 +247,7 @@ namespace ShnorSignature
             }
             catch (Exception ex)
             {
-                WriteLine("Error when read file. Details: " + ex.Message);
+                WriteLine("Ошибка при чтении файла. Подробности: " + ex.Message);
                 return;
             }
 
@@ -281,7 +281,7 @@ namespace ShnorSignature
             }
             catch (Exception ex)
             {
-                WriteLine("Error when read file. Details: " + ex.Message);
+                WriteLine("Ошибка при чтении файла. Подробности: " + ex.Message);
                 return;
             }
 
@@ -321,7 +321,7 @@ namespace ShnorSignature
             }
             catch (Exception ex)
             {
-                WriteLine("Error when read file. Details: " + ex.Message);
+                WriteLine("Ошибка при чтении файла. Подробности: " + ex.Message);
                 return;
             }
 
@@ -359,7 +359,7 @@ namespace ShnorSignature
             }
             catch (Exception ex)
             {
-                WriteLine("Error when read file. Details: " + ex.Message);
+                WriteLine("Ошибка при чтении файла. Подробности: " + ex.Message);
                 return;
             }
 
@@ -381,7 +381,7 @@ namespace ShnorSignature
             }
             catch (Exception ex)
             {
-                WriteLine("Error when read file. Details: " + ex.Message);
+                WriteLine("Ошибка при чтении файла. Подробности: " + ex.Message);
                 return;
             }
 
@@ -400,7 +400,7 @@ namespace ShnorSignature
         private static bool DeleteFilesByNames(params string[] fileNames)
         {
             foreach (string path in fileNames)
-                File.Delete(path);
+                File.Delete(@"..\..\..\..\Протокол\" + path);
 
             return true;
         }
