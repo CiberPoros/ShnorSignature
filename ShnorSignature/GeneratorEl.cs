@@ -4,13 +4,13 @@ using BigMath;
 
 namespace ShnorSignature
 {
-    public class Operations
+    public class GeneratorEl
     {
         /// <summary>
         /// Складывает точку с точкой, вернет false, если угловой коефф был 0
         /// </summary>
         /// <returns></returns>
-        public static bool SumPoints(F_int x1, F_int y1, F_int x2, F_int y2, out F_int x3, out F_int y3, F_int A)
+        public static bool SummPointOnPoint(F_int x1, F_int y1, F_int x2, F_int y2, out F_int x3, out F_int y3, F_int A)
         {
             if (x1.IsNull() && y1.IsNull())
             {
@@ -106,7 +106,7 @@ namespace ShnorSignature
 
                 for (BigInteger j = 0; j < degrees[(int)i]; j++)
                 {
-                    SumPoints(_x, _y, _x, _y, out _x, out _y, A);
+                    SummPointOnPoint(_x, _y, _x, _y, out _x, out _y, A);
                 }
 
                 if (i == 0)
@@ -124,7 +124,7 @@ namespace ShnorSignature
                 }
                 else
                 {
-                    SumPoints(res_x, res_y, _x, _y, out res_x, out res_y, A);
+                    SummPointOnPoint(res_x, res_y, _x, _y, out res_x, out res_y, A);
                 }
             }
 

@@ -9,7 +9,7 @@ using static System.Console;
 
 namespace ShnorSignature
 {
-    public class Param
+    public class ParametersEl
     {
         public BigInteger Val { get; set; }
         public bool IsPoint { get; set; }
@@ -17,14 +17,14 @@ namespace ShnorSignature
         public BigInteger Y { get; set; }
         public string Name { get; set; }
 
-        public Param(BigInteger val, string name)
+        public ParametersEl(BigInteger val, string name)
         {
             Val = val;
             IsPoint = false;
             Name = name;
         }
 
-        public Param(BigInteger x, BigInteger y, string name)
+        public ParametersEl(BigInteger x, BigInteger y, string name)
         {
             X = x;
             Y = y;
@@ -32,7 +32,7 @@ namespace ShnorSignature
             Name = name;
         }
 
-        public Param(F_int x, F_int y, string name)
+        public ParametersEl(F_int x, F_int y, string name)
         {
             if (x.IsNull())
             {
@@ -66,7 +66,7 @@ namespace ShnorSignature
                 int index = -1;
                 for (int i = 0; i < temp.Length; i++)
                 {
-                    if (temp[i].Split(' ')[0] == __refvalue(r, Param).Name)
+                    if (temp[i].Split(' ')[0] == __refvalue(r, ParametersEl).Name)
                     {
                         index = i;
                         break;
@@ -74,21 +74,21 @@ namespace ShnorSignature
                 }
 
                 if (index == -1)
-                    throw new Exception("Description of parameter " + __refvalue(r, Param).Name + " does not exists in file \"" + fileName + "\"");
+                    throw new Exception("Description of parameter " + __refvalue(r, ParametersEl).Name + " does not exists in file \"" + fileName + "\"");
 
                 if (temp[index].Split(' ')[2].Split(';').Length == 2)
                 {
-                    __refvalue(r, Param).IsPoint = true;
-                    __refvalue(r, Param).X = BigInteger.Parse(temp[index].Split(' ')[2].Split(';')[0].Trim(new char[] { '(', ')' }));
-                    __refvalue(r, Param).Y = BigInteger.Parse(temp[index].Split(' ')[2].Split(';')[1].Trim(new char[] { '(', ')' }));
+                    __refvalue(r, ParametersEl).IsPoint = true;
+                    __refvalue(r, ParametersEl).X = BigInteger.Parse(temp[index].Split(' ')[2].Split(';')[0].Trim(new char[] { '(', ')' }));
+                    __refvalue(r, ParametersEl).Y = BigInteger.Parse(temp[index].Split(' ')[2].Split(';')[1].Trim(new char[] { '(', ')' }));
                 }
                 else
                 {
-                    __refvalue(r, Param).IsPoint = false;
-                    __refvalue(r, Param).Val = BigInteger.Parse(temp[index].Split(' ')[2]);
+                    __refvalue(r, ParametersEl).IsPoint = false;
+                    __refvalue(r, ParametersEl).Val = BigInteger.Parse(temp[index].Split(' ')[2]);
                 }
 
-                s_out = s_out + __refvalue(r, Param).Name + ", ";
+                s_out = s_out + __refvalue(r, ParametersEl).Name + ", ";
             }
 
             s_out = s_out.Substring(0, s_out.Length - 2);
@@ -98,7 +98,7 @@ namespace ShnorSignature
             return true;
         }
 
-        public static bool OutToFile(string fileName, params Param[] values)
+        public static bool OutToFile(string fileName, params ParametersEl[] values)
         {
             var temp = new string[values.Length];
             var names = new string[values.Length];

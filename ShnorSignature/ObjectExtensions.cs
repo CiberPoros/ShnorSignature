@@ -1,6 +1,6 @@
 ﻿namespace ShnorSignature
 {
-    public static class Extensios
+    public static class ObjectExtensions
     {
         public static bool IsNull<T>(this T obj) where T : class
         {
@@ -11,7 +11,5 @@
         {
             return null != obj;
         }
-
-        public const string ArgumentsPath = @"..\..\..\..\Generator\test.exe";
     }
 }
