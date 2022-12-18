@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 using static System.Console;
 using System.Numerics;
@@ -19,7 +18,14 @@ namespace ShnorSignature
         private const string _openKeyPath = "открытый_ключ.txt";
         private const string _closeKeyPath = "закрытый_ключ.txt";
         private const string _messagePath = "сообщение.txt";
-        private const string _signaturePath = "подпись.txt";
+
+        private const string _create_kValue = "подписание_k_число.txt";
+        private const string _create_RPoint = "подписание_R_точка.txt";
+        private const string _create_eValue = "подписание_e_число.txt";
+        private const string _create_sValue = "подписание_s_число.txt";
+
+        private const string _verify_RPoint = "проверка_R_точка.txt";
+        private const string _verify_eValue = "проверка_e_число.txt";
 
         private const string _pythonExePath = @"C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\python.exe";
 
@@ -47,11 +53,26 @@ namespace ShnorSignature
                     case StepType.GENERATE_PUBLIC_KEY:
                         GeneratePublicKey();
                         break;
-                    case StepType.CREATE_SIGNATURE:
-                        CreateSignature();
+                    case StepType.CREATE_CALC_k:
+                        CreateGenerateK();
                         break;
-                    case StepType.VERIFY_SIGNATURE:
-                        VerifySignature();
+                    case StepType.CREATE_CALC_R:
+                        CreateCalculateR();
+                        break;
+                    case StepType.CREATE_CALC_e:
+                        CreateCalculateE();
+                        break;
+                    case StepType.CREATE_CALC_s:
+                        CreateCalculateS();
+                        break;
+                    case StepType.VERIFY_CALC_R:
+                        VerifyCalculateR();
+                        break;
+                    case StepType.VERIFY_CALC_e:
+                        VerifyCalculateE();
+                        break;
+                    case StepType.VERIFY_SIGN:
+                        VerifySign();
                         break;
                 }
             }
@@ -62,7 +83,8 @@ namespace ShnorSignature
             var l = ReadL();
             File.WriteAllText(_lFileName, l.ToString());
 
-            DeleteFilesByNames(_publicParametersPath, _openKeyPath, _closeKeyPath, _signaturePath);
+            DeleteFilesByNames(_publicParametersPath, _openKeyPath, _closeKeyPath);
+            DeleteFilesByNames(_create_kValue, _create_RPoint, _create_eValue, _create_sValue, _verify_RPoint, _verify_eValue);
 
             var start = new ProcessStartInfo
             {
@@ -89,14 +111,14 @@ namespace ShnorSignature
 
         private static void GeneratePrivateKey()
         {
-            DeleteFilesByNames(_openKeyPath, _closeKeyPath, _signaturePath);
+            DeleteFilesByNames(_openKeyPath, _closeKeyPath);
+            DeleteFilesByNames(_create_kValue, _create_RPoint, _create_eValue, _create_sValue, _verify_RPoint, _verify_eValue);
 
-            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _r = new Param(0, "r"), Q = new Param(0, 0, "Q");
+            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _r = new Param(0, "r");
 
             try
             {
-                var input = File.ReadAllLines(@"..\..\..\..\Протокол\" + _publicParametersPath);
-                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r, Q));
+                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r));
             }
             catch (Exception e)
             {
@@ -113,7 +135,8 @@ namespace ShnorSignature
 
         private static void GeneratePublicKey()
         {
-            DeleteFilesByNames(_openKeyPath, _signaturePath);
+            DeleteFilesByNames(_openKeyPath);
+            DeleteFilesByNames(_create_kValue, _create_RPoint, _create_eValue, _create_sValue, _verify_RPoint, _verify_eValue);
 
             var _p = new Param(0, "p");
             var _A = new Param(0, "A");
@@ -123,9 +146,14 @@ namespace ShnorSignature
 
             try
             {
-                var input = File.ReadAllLines(@"..\..\..\..\Протокол\" + _publicParametersPath);
                 ReadInFile(_publicParametersPath, __arglist(_p, _A, _r, Q));
                 ReadInFile(_closeKeyPath, __arglist(_l));
+
+                if (BigInteger.ModPow(Q.Y, 2, _p.Val) != (BigInteger.ModPow(Q.X, 3, _p.Val) + _A.Val * Q.X) % _p.Val)
+                {
+                    WriteLine($"Тогда {nameof(Q)} не принадлежит кривой!");
+                    return;
+                }
             }
             catch (Exception e)
             {
@@ -142,64 +170,16 @@ namespace ShnorSignature
             WriteLine();
         }
 
-        private static void CreateSignature()
+        private static void CreateGenerateK()
         {
-            DeleteFilesByNames(_signaturePath);
+            DeleteFilesByNames(_create_kValue, _create_RPoint, _create_eValue, _create_sValue, _verify_RPoint, _verify_eValue);
 
-            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _r = new Param(0, "r"), Q = new Param(0, 0, "Q"), _l = new Param(0, "l");
-
-            try
-            {
-                var input = File.ReadAllLines(@"..\..\..\..\Протокол\" +  _publicParametersPath);
-                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r, Q));
-
-                ReadInFile(_closeKeyPath, __arglist(_l));
-            }
-            catch (Exception e)
-            {
-                WriteLine("Error when read file. Details: " + e.Message);
-                return;
-            }
-
-            BigInteger k = -1;
-            for (; ; )
-            {
-                k = _randomBigInteger.NextBigInteger(ref _random, 1, _r.Val);
-
-                F_int q1 = new F_int(Q.X, _p.Val), q2 = new F_int(Q.Y, _p.Val), A = new F_int(_A.Val, _p.Val);
-
-                Operations.MultiPointOnConst(q1, q2, k, A, out F_int r1, out F_int r2);
-
-                Param _R = new Param(r1, r2, "R");
-                    
-                BigInteger e = GetHash(File.ReadAllText(@"..\..\..\..\Протокол\" + _messagePath, Encoding.Default) + _R.ToString(), _r.Val);
-
-                if (e == 0)
-                    continue;
-
-                BigInteger s = ((_l.Val * e) % _r.Val + k) % _r.Val;
-
-                OutToFile(_signaturePath, new Param(e, "e"), new Param(s, "s"));
-
-                WriteLine("Signature was created successfuly!");
-                WriteLine();
-
-                return;
-            }
-        }
-
-        private static void VerifySignature()
-        {
-            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _r = new Param(0, "r"), _Q = new Param(0, 0, "Q"), 
-                _P = new Param(0, 0, "P"), _s = new Param(0, "s"), _e = new Param(0, "e");
+            var _r = new Param(0, "r");
 
             try
             {
                 var input = File.ReadAllLines(@"..\..\..\..\Протокол\" + _publicParametersPath);
-                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r, _Q));
-
-                ReadInFile(_openKeyPath, __arglist(_P));
-                ReadInFile(_signaturePath, __arglist(_s, _e));
+                ReadInFile(_publicParametersPath, __arglist(_r));
             }
             catch (Exception e)
             {
@@ -207,7 +187,146 @@ namespace ShnorSignature
                 return;
             }
 
-            F_int q1 = new F_int(_Q.X, _p.Val), q2 = new F_int(_Q.Y, _p.Val), A = new F_int(_A.Val, _p.Val), p1 = new F_int(_P.X, _p.Val), p2 = new F_int(_P.Y, _p.Val);     
+            var k = _randomBigInteger.NextBigInteger(ref _random, 1, _r.Val);
+
+            OutToFile(_create_kValue, new Param(k, "k"));
+
+            WriteLine("k generated!");
+            WriteLine();
+        }
+
+        private static void CreateCalculateR()
+        {
+            DeleteFilesByNames(_create_RPoint, _create_eValue, _create_sValue, _verify_RPoint, _verify_eValue);
+
+            Param _p = new Param(0, "p"), _A = new Param(0, "A"), Q = new Param(0, 0, "Q"), k = new Param(0, "k");
+
+            try
+            {
+                ReadInFile(_publicParametersPath, __arglist(_p, _A, Q));
+                ReadInFile(_create_kValue, __arglist(k));
+
+                if (BigInteger.ModPow(Q.Y, 2, _p.Val) != (BigInteger.ModPow(Q.X, 3, _p.Val) + _A.Val * Q.X) % _p.Val)
+                {
+                    WriteLine($"Тогда {nameof(Q)} не принадлежит кривой!");
+                    return;
+                }
+            }
+            catch (Exception e)
+            {
+                WriteLine("Error when read file. Details: " + e.Message);
+                return;
+            }
+
+            F_int q1 = new F_int(Q.X, _p.Val), q2 = new F_int(Q.Y, _p.Val), A = new F_int(_A.Val, _p.Val);
+            Operations.MultiPointOnConst(q1, q2, k.Val, A, out F_int r1, out F_int r2);
+            Param _R = new Param(r1, r2, "R");
+
+            OutToFile(_create_RPoint, _R);
+
+            WriteLine("R calculated!");
+            WriteLine();
+        }
+
+        private static void CreateCalculateE()
+        {
+            DeleteFilesByNames(_create_eValue, _create_sValue, _verify_RPoint, _verify_eValue);
+
+            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _r = new Param(0, "r"), R = new Param(0, 0, "R");
+
+            try
+            {
+                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r));
+                ReadInFile(_create_RPoint, __arglist(R));
+
+                if (BigInteger.ModPow(R.Y, 2, _p.Val) != (BigInteger.ModPow(R.X, 3, _p.Val) + _A.Val * R.X) % _p.Val)
+                {
+                    WriteLine($"Тогда {nameof(R)} не принадлежит кривой!");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine("Error when read file. Details: " + ex.Message);
+                return;
+            }
+
+            BigInteger e = GetHash(File.ReadAllText(@"..\..\..\..\Протокол\" + _messagePath, Encoding.Default) + R.ToString(), _r.Val);
+
+            if (e == 0)
+            {
+                WriteLine("Вычисленное значение e != 0! Перейдите к шагу 4");
+                WriteLine();
+                return;
+            }    
+
+            OutToFile(_create_eValue, new Param(e, "e"));
+
+            WriteLine("e calculated!");
+            WriteLine();
+        }
+
+        private static void CreateCalculateS()
+        {
+            DeleteFilesByNames(_create_sValue, _verify_RPoint, _verify_eValue);
+
+            Param _r = new Param(0, "r"), _l = new Param(0, "l"), e = new Param(0, "e"), k = new Param(0, "k");
+
+            try
+            {
+                ReadInFile(_publicParametersPath, __arglist(_r));
+                ReadInFile(_closeKeyPath, __arglist(_l));
+                ReadInFile(_create_kValue, __arglist(k));
+                ReadInFile(_create_eValue, __arglist(e));
+            }
+            catch (Exception ex)
+            {
+                WriteLine("Error when read file. Details: " + ex.Message);
+                return;
+            }
+
+            var s = ((_l.Val * e.Val) % _r.Val + k.Val) % _r.Val;
+
+            OutToFile(_create_sValue, new Param(s, "s"));
+
+            WriteLine("s calculated!");
+            WriteLine();
+        }
+
+        private static void VerifyCalculateR()
+        {
+            DeleteFilesByNames(_verify_RPoint, _verify_eValue);
+
+            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _Q = new Param(0, 0, "Q"),
+                _P = new Param(0, 0, "P"), _s = new Param(0, "s"), _e = new Param(0, "e");
+
+            try
+            {
+                ReadInFile(_publicParametersPath, __arglist(_p, _A, _Q));
+                ReadInFile(_openKeyPath, __arglist(_P));
+                ReadInFile(_create_sValue, __arglist(_s));
+                ReadInFile(_create_eValue, __arglist(_e));
+
+                if (BigInteger.ModPow(_Q.Y, 2, _p.Val) != (BigInteger.ModPow(_Q.X, 3, _p.Val) + _A.Val * _Q.X) % _p.Val)
+                {
+                    WriteLine($"Тогда {nameof(_Q)} не принадлежит кривой!");
+                    return;
+                }
+
+                if (BigInteger.ModPow(_P.Y, 2, _p.Val) != (BigInteger.ModPow(_P.X, 3, _p.Val) + _A.Val * _P.X) % _p.Val)
+                {
+                    WriteLine($"Тогда {nameof(_P)} не принадлежит кривой!");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine("Error when read file. Details: " + ex.Message);
+                return;
+            }
+
+            F_int q1 = new F_int(_Q.X, _p.Val), q2 = new F_int(_Q.Y, _p.Val), 
+                A = new F_int(_A.Val, _p.Val), p1 = new F_int(_P.X, _p.Val), p2 = new F_int(_P.Y, _p.Val);
 
             Operations.MultiPointOnConst(q1, q2, _s.Val, A, out F_int point1_x, out F_int point1_y);
             Operations.MultiPointOnConst(p1, p2, _e.Val, A, out F_int point2_x, out F_int point2_y);
@@ -215,15 +334,65 @@ namespace ShnorSignature
             point2_y._val = (((-point2_y._val) % _p.Val) + _p.Val) % _p.Val;
             Operations.SumPoints(point1_x, point1_y, point2_x, point2_y, out F_int r1, out F_int r2, A);
 
-            Param _R = new Param(r1, r2, "R");
+            OutToFile(_verify_RPoint, new Param(r1, r2, "R"));
 
-            BigInteger ___e = GetHash(File.ReadAllText(@"..\..\..\..\Протокол\" + _messagePath, Encoding.Default) + _R.ToString(), _r.Val);
-
-            if (___e == _e.Val)
-                WriteLine("Signature confirmed!");
-            else
-                WriteLine("Signature not confirmed!");
+            WriteLine("R' calculated!");
             WriteLine();
+        }
+
+        private static void VerifyCalculateE()
+        {
+            DeleteFilesByNames(_verify_eValue);
+
+            Param _p = new Param(0, "p"), _A = new Param(0, "A"), _r = new Param(0, "r"), R = new Param(0, 0, "R");
+
+            try
+            {
+                ReadInFile(_publicParametersPath, __arglist(_p, _A, _r));
+                ReadInFile(_verify_RPoint, __arglist(R));
+
+                if (BigInteger.ModPow(R.Y, 2, _p.Val) != (BigInteger.ModPow(R.X, 3, _p.Val) + _A.Val * R.X) % _p.Val)
+                {
+                    WriteLine($"Тогда {nameof(R)} не принадлежит кривой!");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine("Error when read file. Details: " + ex.Message);
+                return;
+            }
+
+            var ___e = GetHash(File.ReadAllText(@"..\..\..\..\Протокол\" + _messagePath, Encoding.Default) + R.ToString(), _r.Val);
+            OutToFile(_verify_eValue, new Param(___e, "e"));
+
+            WriteLine("e' calculated!");
+            WriteLine();
+        }
+
+        private static void VerifySign()
+        {
+            Param e = new Param(0, "e"), _e = new Param(0, "e");
+
+            try
+            {
+                ReadInFile(_create_eValue, __arglist(e));
+                ReadInFile(_verify_eValue, __arglist(_e));
+            }
+            catch (Exception ex)
+            {
+                WriteLine("Error when read file. Details: " + ex.Message);
+                return;
+            }
+
+            if (e.Val == _e.Val)
+            {
+                WriteLine("Подпись верна!");
+            }
+            else
+            {
+                WriteLine("Подпись не верна!");
+            }
         }
 
         private static BigInteger GetHash(string s, BigInteger mod) => (((new BigInteger(MD5.Create().ComputeHash(Encoding.Default.GetBytes(s)))) % mod) + mod) % mod;
@@ -260,9 +429,13 @@ namespace ShnorSignature
             WriteLine("1. Create common parameters;");
             WriteLine("2. Create private key;");
             WriteLine("3. Create public key;");
-            WriteLine("4. Create signature;");
-            WriteLine("5. Verify signature;");
-            WriteLine("0. Exit program...");
+            WriteLine("4. Generate k;");
+            WriteLine("5. Calculate R;");
+            WriteLine("6. Calculate e;");
+            WriteLine("7. Calculate s;");
+            WriteLine("8. Calculate R';");
+            WriteLine("9. Calculate e';");
+            WriteLine("0. Check sign...");
             WriteLine();
 
             for (; ; )
@@ -282,13 +455,25 @@ namespace ShnorSignature
                         return StepType.GENERATE_PUBLIC_KEY;
                     case ConsoleKey.D4:
                     case ConsoleKey.NumPad4:
-                        return StepType.CREATE_SIGNATURE;
+                        return StepType.CREATE_CALC_k;
                     case ConsoleKey.D5:
                     case ConsoleKey.NumPad5:
-                        return StepType.VERIFY_SIGNATURE;
+                        return StepType.CREATE_CALC_R;
+                    case ConsoleKey.D6:
+                    case ConsoleKey.NumPad6:
+                        return StepType.CREATE_CALC_e;
+                    case ConsoleKey.D7:
+                    case ConsoleKey.NumPad7:
+                        return StepType.CREATE_CALC_s;
+                    case ConsoleKey.D8:
+                    case ConsoleKey.NumPad8:
+                        return StepType.VERIFY_CALC_R;
+                    case ConsoleKey.D9:
+                    case ConsoleKey.NumPad9:
+                        return StepType.VERIFY_CALC_e;
                     case ConsoleKey.D0:
                     case ConsoleKey.NumPad0:
-                        return StepType.NONE;
+                        return StepType.VERIFY_SIGN;
                     default:
                         continue;
                 }
